@@ -1,0 +1,278 @@
+\chapter{Procedural interpretation}
+
+\section{Definitions}
+
+\begin{dfn}[Term base]
+    Let \gls{preds} be a ranked alphabet of \emph{predicate} symbols and \gls{TU} a term universe.
+    The \emph{term base} \gls{TB} is the smallest set \(A\) of \emph{atoms} fulfilling:
+    \begin{enumerate}
+        \item if \(p \in \gls{preds}^{(0)}\), then \(p \in A\),
+        \item for \(n \ge 1\), if \(t_1,\dotsc,t_n \in \gls{TU}\) and \(p \in \gls{preds}^{(n)}\), then \(p(t_1,\dotsc,t_n) \in A\).
+    \end{enumerate}
+\end{dfn}
+
+\begin{dfn}[Queries and programs]
+    A \emph{query} is a finite sequence \(\mathbf{B} = B_1,\dotsc,B_n\) of atoms. The \emph{empty} query is denoted by \(\square\).
+
+    A \emph{definite clause} has the form \(H \from \mathbf{B}\), where the atom \(H\) is the \emph{head} of the clause and the query \(\mathbf{B}\) is its \emph{body}.
+    The \emph{unit clause} \(H \from \square\) is called a \emph{fact}.
+    A \emph{definite program} is a finite set of definite clauses.
+\end{dfn}
+
+\begin{rem}[Meaning of clauses and queries]
+    A clause \(H \from B_1,\dotsc,B_n\) has the following semantical meaning:
+    \begin{equation*}
+        \forall{x_1,\dotsc,x_k}(B_1 \land \dotsb \land B_n \to H),
+    \end{equation*}
+    where \(x_1,\dotsc,x_k \in \gls{vars}\) occur in the clause.
+    Thus, a fact \(H\) encodes \(\forall{x_1,\dotsc,x_k}(H)\).
+
+    A query \(A_1,\dotsc,A_n\) has the following semantical meaning:
+    \begin{equation*}
+        \exists{x_1,\dotsc,x_k}(A_1 \land \dotsb \land A_n),
+    \end{equation*}
+    where \(x_1,\dotsc,x_k \in \gls{vars}\) occur in the query.
+    Thus, the empty query \(\square\) is equivalent to \(\top\).
+\end{rem}
+
+\begin{rem}[Negated queries as definite goals]
+    If we negate a query, what do we obtain?
+    \begin{equation*}
+        \begin{split}
+            \neg\left(\exists{x_1,\dotsc,x_k}(A_1 \land \dotsb \land A_n)\right) &\iff
+            \forall{x_1,\dotsc,x_k}\neg(A_1 \land \dotsb \land A_n) \\
+            &\iff
+            \forall{x_1,\dotsc,x_k}\left(\bot \lor \neg(A_1 \land \dotsb \land A_n)\right) \\
+            &\iff
+            \forall{x_1,\dotsc,x_k}\left(\bot \from (A_1 \land \dotsb \land A_n)\right)
+        \end{split}
+    \end{equation*}
+    Hence, a negated query can be seen as a \emph{constraint} (or \emph{goal}) on the solutions --- a solution makes the conjunction \(A_1 \land \dotsb \land A_n\) false.
+\end{rem}
+
+\subsection{\gls{sld}}
+
+\begin{dfn}[\gls{sld} with no variables]
+    Let \prog be a program, \(\mathbf{A}, B, \mathbf{C}\) be a query and \(B \from \mathbf{B} \in \prog\) a clause.
+    
+    The \emph{\gls{sld}-derivation step} wrt \(B\) is obtained by replacing \(B\) with \(\mathbf{B}\) in the query; this is depicted by \(\mathbf{A}, B, \mathbf{C}\implies \mathbf{A}, \mathbf{B}, \mathbf{C}\).
+    The resulting query \(\mathbf{A}, \mathbf{B}, \mathbf{C}\) is called the \emph{\gls{sld}-resolvent}. 
+\end{dfn}
+
+\begin{dfn}[\gls{sld}, general case]
+    Let \prog be a program, \(\mathbf{A}, B, \mathbf{C}\) be a query, \(c \in \prog\) a clause, \(H \from \mathbf{B}\) a variant of \(c\) with variables disjoint with the query and \(\theta\) a \gls{mgu} of \(B\) and \(H\).
+    
+    The clause \((\mathbf{A}, \mathbf{B}, \mathbf{C})\theta\) is called the \emph{\gls{sld}-resolvent} of \(\mathbf{A}, B, \mathbf{C}\) and \(c\) wrt \(B\) with \gls{mgu} \(\theta\).
+    The \emph{\gls{sld}-derivation step} is depicted as
+    \begin{equation*}
+        \mathbf{A}, B, \mathbf{C} \sldstep{c}{\theta} (\mathbf{A}, \mathbf{B}, \mathbf{C})\theta
+    \end{equation*}
+    and clause \(c\) is said to be \emph{applicable} to atom \(B\); the variant \(H \from \mathbf{B}\) is the \emph{input} clause.
+\end{dfn}
+
+\begin{dfn}[\gls{sld}-derivation]
+    A maximal sequence of \gls{sld}-derivation steps
+    \begin{equation*}
+        Q_0 \sldstep{c_1}{\theta_1} Q_1 \dotsb Q_n
+        \sldstep{c_{n+1}}{\theta_{n+1}} Q_{n+1} \dotsb
+    \end{equation*}
+    is an \emph{\gls{sld}-derivation} of \(\prog \cup \lbrace Q_0 \rbrace\) if:
+    \begin{itemize}
+        \item \(Q_0,\dotsc,Q_{n+1},\dotsc\) are either empty queries or have one selected atom in it;
+        \item \(\theta_1,\dotsc,\theta_{n+1},\dotsc\) are substitutions;
+        \item \(c_1,\dotsc,c_{n+1},\dotsc\) are all clauses of \(\prog\);
+        \item for every \gls{sld}-derivation step, standardization apart holds.
+    \end{itemize}
+\end{dfn}
+
+\begin{dfn}[Standardization apart]
+    The variables of an input clause \(c_i\) are \emph{standardized apart} from those of the initial query and of the previous substitutions and input clauses if
+    \begin{equation*}
+        \Var(c_i) \cap
+        \left(\Var(Q_0) \cup \bigcup_{j=1}^{i-1}(\Var(\theta_j) \cup \Var(c_j))\right) = \emptyset
+    \end{equation*}
+    for \(i \ge 1\), where \(c_i\) is the input clause used in the \(i\)-th \gls{sld}-derivation step.
+\end{dfn}
+
+\begin{dfn}[Results of a derivation]
+    Let \(\xi = Q_0 \sldstep{}{\theta_1} Q_1 \dotsb \sldstep{}{\theta_n} Q_n\) be a finite \gls{sld}-derivation.
+    Then, \(\xi\) is \emph{successful} if \(Q_n = \square\), while it is \emph{failes} if \(Q_n \ne \square\) and no clause is applicable to the selected atom of \(Q_n\).
+
+    For a successful \gls{sld}-derivation \(\xi\), the \emph{\gls{cas}} of \(Q_0\) wrt \(\xi\) is \(\restr{(\theta_1\dotsb\theta_n)}{\Var(Q_0)}\), and the \emph{computed instance} of \(Q_0\) is \(Q_0\theta_1\dotsb\theta_n\).
+\end{dfn}
+
+\begin{dfn}[Resultant]
+    Given a \gls{sld}-derivation step \(Q \sldstep{}{\theta} Q_1\), the associated \emph{resultant} is \(Q\theta \from Q_1\).
+    The \emph{selected} atom of a resultant \(Q \from Q_i\) is defined as the atom selected in \(Q_i\).
+
+    Let \prog be a program, \(R = Q \from \mathbf{A}, B, \mathbf{C}\) a resultant, \(c \in \prog\) a clause, \(H \from \mathbf{B}\) a variant of \(c\) with variables disjoint with \(R\) and \(\theta\) a \gls{mgu} of \(B\) and \(H\).
+
+    The \gls{sld}-resolvent of the resultant \(R\) and \(c\) wrt \(B\) with \gls{mgu} \(\theta\) is \((Q \from \mathbf{A}, \mathbf{B}, \mathbf{C})\theta\); the \emph{\gls{sld}-resultant} step is depicted as
+    \begin{equation*}
+        Q \from \mathbf{A}, B, \mathbf{C} \sldstep{c}{\theta} (Q \from \mathbf{A}, \mathbf{B}, \mathbf{C})\theta.
+    \end{equation*}
+\end{dfn}
+
+\begin{dfn}[Level of a resultant]
+    For a \gls{sld}-derivation
+    \begin{equation*}
+        \xi = Q_0 \sldstep{c_1}{\theta_1} Q_1 \dotsb Q_n
+        \sldstep{c_{n+1}}{\theta_{n+1}} Q_{n+1} \dotsb
+    \end{equation*}
+    and \(i \ge 0\), the \emph{resultant of level} \(i\) of \(\xi\) is \(R_i : Q_0\theta_1\dotsb\theta_i \from Q_i\).
+
+    Intuitively, \(R_i\) describes what is ``proved'' after \(i\) derivation steps; particular cases are \(R_0 \colon Q_0 \from Q_0\) and, if \(\xi\) is successful, \(R_n \colon Q_0\theta_1\dotsb\theta_n\).
+\end{dfn}
+
+\begin{dfn}[Similar derivations]
+    Consider two \gls{sld}-derivations
+    \begin{align*}
+        \xi &= Q_0 \sldstep{c_1}{\theta_1} Q_1 \dotsb Q_n
+        \sldstep{c_{n+1}}{\theta_{n+1}} Q_{n+1} \dotsb \\
+        \xi^\prime &= Q_0^\prime \sldstep{c_1}{\theta_1^\prime} Q_1^\prime \dotsb Q_n^\prime
+        \sldstep{c_{n+1}}{\theta_{n+1}^\prime} Q_{n+1}^\prime \dotsb
+    \end{align*}
+    they are \emph{similar} iff they have the same \emph{length}, \(Q_0\) and \(Q_0^\prime\) are variants and for \(i = \oto{n}\), in \(Q_i\) and \(Q_i^\prime\) atoms in the same positions are selected.
+\end{dfn}
+
+\begin{dfn}[Selection rule]
+    Let \(\mathrm{INIT}\) be the set of \emph{all} the initial fragments of \emph{all} possible \gls{sld}-derivations in which the last query is non-empty.
+    A \emph{selection rule} is a function that assigns to every \(\xi^{<} \in \mathrm{INIT}\) an occurrence of an atom in the last query of \(\xi^{<}\).
+    An \gls{sld}-derivation \(\xi\) is \emph{via} a selection rule \rulesel if for every initial fragment \(\xi^{<}\) of \(\xi\) ending with a non-empty query \(Q\), \(\rulesel(\xi^{<})\) is the selected atom of \(Q\).
+
+    A selection rule \rulesel is \emph{variant independent} if in all initial fragments of \gls{sld}-derivations which are similar, \rulesel chooses the atom in the same position in the last query.
+\end{dfn}
+
+\begin{rem}[Prolog selection rule]
+    Prolog employs the simple selection rule: ``select the leftmost atom''.    
+    This selection rule is variant independent.
+    
+    The selection rule: ``select leftmost atom if query contains variable \(x\), otherwise select rightmost atom'' is not variant independent.
+\end{rem}
+
+\begin{dfn}[\gls{sld}-tree]
+    A \emph{\gls{sld}-tree} for \(\prog \cup \lbrace Q_0 \rbrace\) via selection rule \rulesel fulfills:
+    \begin{itemize}
+        \item \gls{sld}-derivations of \(\prog \cup \lbrace Q_0 \rbrace\) via \rulesel as \emph{branches}
+        \item every node \(Q\) with selected atom \(A\) has exactly one descendant for every clause \(c\) of \prog which is applicable to \(A\): this descendant is a resolvent of \(Q\) and \(c\) wrt \(A\). 
+    \end{itemize}
+    A \gls{sld}-tree is \emph{successful} if the tree has \(\square\) as one of the \emph{leaves}.
+    A \gls{sld}-tree is \emph{finitely failed} if the tree is finite and not successful.
+\end{dfn}
+
+\begin{rem}
+    The \gls{sld}-tree via ``leftmost selection rule'' corresponds to the search space of Prolog.
+\end{rem}
+\section{Algorithms}
+
+\begin{algorithm}
+    \caption{\gls{sld}-resolution \label{alg:sld}}
+    \begin{algorithmic}[1]
+      \Require{A query \(Q\) against a program \prog}
+      \Statex
+      \State Select an atom in the query\label{sld:ch-1}
+      \State If necessary, rename the selected clause\label{sld:ch-2}
+      \State Instantiate query and clause by a \gls{mgu} of the selected atom and the head of the clause\label{sld:ch-3}
+      \State Replace the instance of the selected atom by the instance of the body of the clause.\label{sld:ch-4}
+    \end{algorithmic}
+  \end{algorithm}
+
+  \begin{rem}
+      Thanks to Corollary~\ref{proc:cor-2}, the choices made in steps~\algref{alg:sld}{sld:ch-2} and~\algref{alg:sld}{sld:ch-3} have no influence --- modulo renaming --- on the statement proved by a successful \gls{sld}-derivation.
+
+      Thanks to Theorem~\ref{proc:thm-2}, the choice made in step~\algref{alg:sld}{sld:ch-1} has no influence, in case of successful queries.
+
+      Theorem~\ref{proc:thm-3} shows that the choice made in the step~\algref{alg:sld}{sld:ch-4} has no influence on the search space as a whole.
+  \end{rem}
+
+  \section{Theorems \& friends}
+
+  \begin{lem}
+    \label{proc:lem-1}
+      Suppose that
+      \begin{equation*}
+          R \sldstep{c}{\theta}R_1 \qquad R^\prime \sldstep{c}{\eta}R_1^\prime
+      \end{equation*}
+      are two \gls{sld}-resultant steps where
+      \begin{itemize}
+          \item \(R\) is an instance of \(R^\prime\),
+          \item in \(R\) and \(R^\prime\) atoms in the same positions are selected.
+      \end{itemize}
+      Then, \(R_1\) is an instance of \(R_1^\prime\).
+  \end{lem}
+
+  \begin{cor}[from~\ref{proc:lem-1}]
+    Suppose that
+    \begin{equation*}
+        Q \sldstep{c}{\theta}Q_1 \qquad Q^\prime \sldstep{c}{\eta}Q_1^\prime
+    \end{equation*}
+    are two \gls{sld}-derivation steps where
+    \begin{itemize}
+        \item \(Q\) is an instance of \(Q^\prime\),
+        \item in \(Q\) and \(Q^\prime\) atoms in the same positions are selected.
+    \end{itemize}
+    Then, \(Q_1\) is an instance of \(Q_1^\prime\).
+  \end{cor}
+
+  \begin{thm}[On variants]
+    \label{proc:thm-1}
+      Consider two similar \gls{sld}-derivations \(\xi\), \(\xi^\prime\).
+      Then, for every \(i \ge 0\), the resultants \(R_i\) and \(R_i^\prime\) of level \(i\) of \(\xi\) and \(\xi^\prime\) resp., are variants of each other.
+  \end{thm}
+  \begin{proof}
+    By induction on the level \(i\) of the resultants.
+    \begin{description}
+        \item[I.B. \((i = 0)\)] Since \(R_0 \colon Q_0 \from Q_0\), \(R_0^\prime \colon Q_0^\prime \from Q_0^\prime\) and \(Q_0\), \(Q_0^\prime\) are variants (\(\xi\) and \(\xi^\prime\) are similar), this case holds trivially.
+        \item[I.H] Assume that \(R_i\) and \(R_i^\prime\) are variants.
+        \item[I.C \((i \to i+1)\)] Being variants, \(R_i\) is an instance of \(R_i^\prime\) (and vice versa).
+        Thanks to Lemma~\ref{proc:lem-1}, this implies that \(R_{i+1}\) is an instance of \(R_{i+1}^\prime\) (and vice versa).
+        Therefore, \(R_{i+1}\) and \(R_{i+1}^\prime\) are variants.
+    \end{description}
+  \end{proof}
+
+  \begin{cor}[from thm.~\ref{proc:thm-1}]
+    \label{proc:cor-2}
+      Consider two similar and successful \gls{sld}-derivations of \(Q_0\) with \gls{cas}s \(\theta\) and \(\eta\).
+      Then, \(Q_0\theta\) and \(Q_0\eta\) are variants.
+  \end{cor}
+  \begin{proof}
+      Since both the \gls{sld}-derivations are successful, and they have the same length, thanks to~\ref{proc:thm-1}, \(R_n \colon Q_0\theta\) and \(R_n^\prime \colon Q_0\eta\) are variants; this allow us to conclude that the assertion holds.
+  \end{proof}
+
+  \begin{lem}[Switching lemma]
+      Consider a \gls{sld}-derivation
+      \begin{equation*}
+        \xi = Q_0 \sldstep{c_1}{\theta_1} Q_1 \dotsb Q_n
+        \sldstep{c_{n+1}}{\theta_{n+1}} Q_{n+1} \sldstep{c_{n+2}}{\theta_{n+2}} \dotsb
+    \end{equation*}
+    where \(Q_n\) includes the atoms \(A_1\) and \(A_2\), \(A_1\) is the selected atom of \(Q_n\) and \(A_2\theta_{n+1}\) is the selected atom of \(Q_{n+1}\).
+
+    Then, for some \(Q_{n+1}^\prime\), \(\theta_{n+1}^\prime\) and \(\theta_{n+2}^\prime\), we can consider
+    \begin{equation*}
+        \xi^\prime = Q_0 \sldstep{c_1}{\theta_1} Q_1 \dotsb Q_n
+        \sldstep{c_{n+2}}{\theta_{n+1}^\prime} Q_{n+1}^\prime \sldstep{c_{n+1}}{\theta^\prime_{n+2}} \dotsb
+    \end{equation*}
+    such that \(A_2\) is the selected atom of \(Q_n\), \(A_1\theta_{n+1}^\prime\) is the selected atom of \(Q_{n+1}^\prime\) and \(\theta_{n+1}^\prime\theta_{n+2}^\prime = \theta_{n+1}\theta_{n+2}\).
+  \end{lem}
+
+  \begin{thm}
+    \label{proc:thm-2}
+      Let \(\xi\) be a successful \gls{sld}-derivation of \(\prog \cup \lbrace Q_0 \rbrace\).
+      Then, for every selection rule \rulesel, there exists a successful \gls{sld}-derivation \(\xi^\prime\) of \(\prog \cup \lbrace Q_0 \rbrace\) via \rulesel such that the \gls{cas}s of \(Q_0\) wrt \(\xi\) and \(\xi^\prime\) are the same and \(\xi\), \(\xi^\prime\) have the same length.
+  \end{thm}
+  \begin{proof}[Proof-sketch]
+      By induction on \(i\).
+      \begin{description}
+          \item[I.B \((i = 0)\)] Trivial.
+          \item[I.H.] Assume that \(\xi\) is via \rulesel up to \(Q_{i-1}\).
+          \item[I.C.] The selection rule \rulesel selects \(A\) in \(Q_i\).
+          Then, \(A\theta_{i+1}\dotsb\theta_{i+j}\) is the selected atom of \(Q_{i+j}\) in \(\xi\) for some \(j > 1\), since \(\xi\) is successful.
+          Then, by applying the Switching Lemma \(j\) times, the result follows. 
+      \end{description}
+  \end{proof}
+
+  \begin{thm}[Branch theorem]
+      \label{proc:thm-3}
+      Consider a \gls{sld}-tree \(\mathcal{T}\) for \(\prog \cup \lbrace Q_0 \rbrace\) via a variant independent selection rule \rulesel.
+      Then, every \gls{sld}-derivation of \(\prog \cup \lbrace Q_0 \rbrace\) via \rulesel is similar to a branch in \(\mathcal{T}\). 
+  \end{thm}

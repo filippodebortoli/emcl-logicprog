@@ -1,0 +1,183 @@
+
+\chapter{Unification}
+
+\section{Definitions}
+
+\begin{dfn}[Ranked alphabet]
+  A \emph{ranked alphabet} is a finite set \gls{alph} of symbols, each one with its \emph{arity}; \(\gls{alph}^{(n)}\) is the subset of \gls{alph} of \(n\)-ary symbols.
+\end{dfn}
+
+\begin{dfn}[Term universe]
+  Given a set of \emph{variables} \gls{vars} and a ranked alphabet of \emph{function} symbols \gls{funcs}, the \emph{term universe} \gls{TU} is the smallest set \gls{terms} of \emph{terms} with:
+  \begin{enumerate}
+      \item \(\gls{vars} \subseteq \gls{terms}\),
+      \item if \(f \in \gls{funcs}^{(0)}\) is a \emph{constant} symbol, then \(f \in \gls{terms}\),
+      \item if \(f \in \gls{funcs}^{(n)}\), with \(n \ge 1\) and \(t_1,\dotsc,t_n \in \gls{terms}\), then \(f(t_1,\dotsc,t_n) \in \gls{terms}\).
+  \end{enumerate}
+  A term \(t\) is \emph{ground} if \(\gls{tVar} = \emptyset\).
+  A term \(s\) is a \emph{sub-term} of \(t\) if it is a sub-string of \(t\).
+\end{dfn}
+
+\begin{dfn}[Substitution]
+    Given a finite set \(X \subseteq \gls{vars}\), a \emph{substitution} is a function \(\theta \colon X \to \gls{TU}\) such that \(x \ne \theta(x)\) for every \(x \in X\).
+
+    If \(X = \lbrace x_1,\dotsc,x_n \rbrace\) and \(\theta(x_i) = t_i\), the notation is \(\theta = \lbrace x_1/t_1,\dotsc,x_n/t_n \rbrace\).
+    The \emph{domain} of \(\theta\) is \(\gls{dom} := \lbrace x_1,\dotsc,x_n \rbrace\).
+    \begin{enumerate}
+        \item if \(X = \emptyset\), \(\theta = \epsilon\) is the \emph{empty} substitution;
+        \item a substitution is \emph{ground} if \(t_1,\dotsc,t_n\) are ground terms;
+        \item a \emph{pure} variable substitution replace variables with variables;
+        \item a substitution is a \emph{renaming} if \(\lbrace t_1,\dotsc,t_n \rbrace = \lbrace x_1,\dotsc,x_n \rbrace\);
+        \item for \(Y \subseteq \gls{vars}\), \(\restr{\theta}{Y} := \lbrace y/t \mid y/t \in \theta, y \in Y \rbrace \).
+    \end{enumerate} 
+\end{dfn}
+
+\begin{dfn}[Terms and substitutions]
+    If \(x \in \gls{vars}\), then
+    \begin{equation*}
+        x\theta := \begin{cases}
+            \theta(x) & x \in \gls{dom} \\
+            x & x \notin \gls{dom}
+        \end{cases}
+    \end{equation*}
+    Otherwise, \(f(t_1,\dotsc,t_n)\theta := f(t_1\theta,\dotsc,t_n\theta)\).
+
+    The term \(t\) is an \emph{instance} of \(s\) if there is a substitution \(\theta\) with \(s\theta = t\); in this case, \(s\) is \emph{more general} than \(t\).
+    The term \(t\) is a \emph{variant} of \(s\) if \(t\) is an instance of \(s\) wrt \(\theta\) and \(\theta\) is a renaming.
+\end{dfn}
+
+\begin{dfn}[Composition]
+    Given substitutions \(\theta\) and \(\eta\), their \emph{composition} is defined as \((\theta\eta)(x) := (x\theta)\eta\) for \(x \in \gls{vars}\).
+\end{dfn}
+
+\begin{dfn}[Substitution ordering]
+    Given substitutions \(\theta\) and \(\eta\), \(\theta\) is \emph{more general} than \(\eta\) iff \(\eta = \theta\tau\) for some substitution \(\tau\).
+\end{dfn}
+
+\begin{dfn}[Unifiers]
+    A substitution \(\theta\) is a unifier for \(s,t \in \gls{terms}\) iff \(s\theta = t\theta\); in this case, \(s\) and \(t\) are \emph{unifiable}.
+
+    A unifier \(\theta\) for \(s\) and \(t\) is a \gls{mgu} of \(s\) and \(t\) iff it is more general than all the unifiers of \(s\), \(t\).
+
+    A unifier \(\theta\) for the \emph{unification problem} \(E = \lbrace s_1 \doteq t_1,\dotsc, s_n \doteq t_n \rbrace\) satisfies \(s_i\theta = t_i\theta\) for all \(i = \ito{n}\), and it is the \gls{mgu} of \(E\) if it is more general than all the unifiers of \(E\).
+\end{dfn}
+
+\begin{dfn}[Unification problems]
+    A \emph{unification problem} is a set \(E = \lbrace s_1 \doteq t_1,\dotsc, s_n \doteq t_n \rbrace\) where \(s_i,t_i \in \gls{terms}\) for all \(i = \ito{n}\).
+    The unification problems \(E\) and \(E^\prime\) are \emph{equivalent} if they have the same set of unifiers.
+
+    A set \(\lbrace x_i \doteq t_1,\dotsc,x_n \doteq t_n \rbrace\) is \emph{solved} if \(x_i \ne x_j\) for \(i \ne j\) and no \(x_i\) occurs in \(t_j\), \(i,j = \ito{n}\).
+\end{dfn}
+
+\section{Algorithms}
+\begin{algorithm}[!h]
+    \caption{Martelli-Montanari: computing \gls{mgu} for a unification problem \label{alg:mm}}
+    \begin{algorithmic}[1]
+      \Require{\(E\) is a set of pair of terms}
+      \Statex
+      \Repeat
+      \State Choose nondeterministically a pair \(t \doteq s\)
+      \Switch{\(t \doteq s\)}
+      \Case{\(f(s_1,\dotsc,s_n) \doteq f(t_1,\dotsc,t_n)\)}
+      \State replace by \(s_1 \doteq t_1,\dotsc,s_n \doteq t_n\) \label{mm:1}
+      \EndCase
+      \Case{\(f(s_1,\dotsc,s_n) \doteq g(t_1,\dotsc,t_m)\) where \(f \ne g\)}
+      \State halt with failure \Comment{\emph{clash} failure} \label{mm:2}
+      \EndCase
+      \Case{\(x \doteq x\)}
+      \State delete the pair \label{mm:3}
+      \EndCase
+      \Case{\(t \doteq x\), \(t \notin \gls{vars}\)}
+      \State replace by \(x \doteq t\) \label{mm:4}
+      \EndCase
+      \Case{\(x \doteq t\), \(x \notin \gls{tVar}\) and \(x\) occurring in some other pair}
+      \State perform substitution \(\lbrace x/t \rbrace\) on all other pairs \label{mm:5}
+      \EndCase
+      \Case{\(x \doteq t\), \(x \in \gls{tVar}\) and \(x \ne t\)}
+      \State halt with failure \Comment{\emph{occur check} failure} \label{mm:6}
+      \EndCase
+      \EndSwitch
+      \Until{No action can be performed}
+      \State \Return{success}
+    \end{algorithmic}
+  \end{algorithm}
+
+  \begin{rem}[Implementation of Martelli-Montanari]
+      In most Prolog implementations, the occur check performed in~\algref{alg:mm}{mm:6} does not apply, for the sake of efficiency.
+      This means that the algorithm terminates with success in the case \(\lbrace x \doteq f(x) \rbrace\), despite the terms not being unifiable.
+
+      Similarly,~\algref{alg:mm}{mm:5} is usually not implemented in Prolog systems.
+      This may lead to sets where the \gls{mgu} is implicitly represented, as in \(\lbrace x \doteq f(y), y \doteq g(a) \rbrace\).
+  \end{rem}
+
+\section{Theorems \& friends}
+
+\begin{lem}[Variants and instances]
+    The term \(t\) is a variant of \(s\) iff \(t\) is an instance of \(s\) and \(s\) is an instance of \(t\).
+\end{lem}
+
+\begin{lem}[How-to build compositions]
+    Let \(\theta = \lbrace x_1/t_1,\dotsc,x_n/t_n \rbrace\) and \(\eta = \lbrace y_1/s_1,\dotsc,y_m/s_m \rbrace\).
+    The composition \(\theta\eta\) is obtained by applying the following steps to the sequence:
+    \begin{equation*}
+        x_1/t_1\eta,\dotsc,x_n/t_n\eta,y_1/s_1,\dotsc,y_m/s_m
+    \end{equation*}
+    \begin{enumerate}
+        \item Remove all bindings \(x_i/t_i\eta\) where \(x_i = t_i\eta\) and all bindings \(y_j/s_j\) where \(y_j \in \lbrace x_1,\dotsc,x_n \rbrace\),
+        \item Form a substitution from the resulting sequence.
+    \end{enumerate}
+\end{lem}
+
+\begin{lem}[Unification problem and \gls{mgu}s]
+    \label{lem:uni-mgu}
+    If \(E = \lbrace s_1 \doteq t_1,\dotsc, s_n \doteq t_n \rbrace\) is solves, then \(\theta = \lbrace x_1/t_1,\dotsc,x_n/t_n \rbrace\) is an \gls{mgu} of \(E\).    
+\end{lem}
+\begin{proof}
+    Notice that \(x_i\theta = t_i = t_i\theta\) holds for all \(i = \ito{n}\), since \(E\) is solved.
+    Then, for every unifier \(\eta\) of \(E\), \(x_i\eta = t_i\eta = x_i\theta\eta\) for all \(i = \ito{n}\), while \(x\eta = x\theta\eta\) if \(x \notin \lbrace x_1,\dotsc,x_n \rbrace\). Hence, \(\eta = \theta \eta\).
+\end{proof}
+
+\begin{thm}[Martelli-Montanari]
+    If a unification problem \(E\) has a unifier, then the algorithm~\ref{alg:mm} successfully terminates and produces a solved set \(E^\prime\) equivalent to \(E\); otherwise, it terminates with failure.
+\end{thm}
+\begin{proof}
+    First, we prove termination.
+    Define a variable \(x\) as \emph{solved} in E iff \(x \doteq t \in E\) and that is the unique occurrence of \(x\) in \(E\).
+    Define the following:
+    \begin{itemize}
+        \item \(uns(E)\) is the number of unsolved variables in \(E\),
+        \item \(lfun(E)\) is the number of occurrences of function symbols in the first component of pairs of \(E\),
+        \item \(card(E)\) is the number of pairs in \(E\).
+    \end{itemize}
+    Then, each successful action of the Martelli-Montanari algorithm decreases the triplet \((uns(E),lfun(E),card(E))\) wrt \(\prec_3\) (the lexicographic ordering on \(\mathbb{N}^3\):
+    \begin{itemize}
+        \item if~\algref{alg:mm}{mm:1} is applied, then \((u,l,c) \succ_3 (u - k, l - 1, c + n - 1)\) where \(0 \le k \le n\) is the number of \emph{new} solved variables obtained;
+        \item if~\algref{alg:mm}{mm:3} is applied, then \((u,l,c) \succ_3 (u - k, l, c - 1)\) where \(k = 1\) if \(x\) becomes solved, \(0\) otherwise;
+        \item if~\algref{alg:mm}{mm:4} is applied, then \((u,l,c) \succ_3 (u - k, l - m, c)\) where \(k = 1\) if \(x\) becomes solved, \(0\) otherwise and \(m\) is the number of function symbols appearing in \(t\);
+        \item if~\algref{alg:mm}{mm:5} is applied, then \((u,l,c) \succ_3 (u - 1, l + k, c)\), since \(x\) becomes solved and some \(k\) function symbols in \(t\) may appear in the lhs of a pair.
+    \end{itemize}
+    Since \((\mathbb{N}^3,\prec_3)\) is a well-founded order, termination is guaranteed.
+
+    Next, we prove that each successful action replaces the set of pairs with an equivalent one. For~\algref{alg:mm}{mm:1}, \algref{alg:mm}{mm:3} and \algref{alg:mm}{mm:4} this is trivially true.
+    Regarding~\algref{alg:mm}{mm:5}, let \(\theta\) be a unifier of \(E \cup \lbrace x \doteq t \rbrace\). Then, \(\theta\) is a unifier of \(E\) and \(x\theta = t\theta\).
+    This means that, by applying the substitution \(\lbrace x/t \rbrace\) to \(E\), \(\theta\) is still a unifier for \(E\lbrace x/t \rbrace\).
+    Therefore, \(\theta\) is a unifier for \(E\lbrace x/t \rbrace \cup \lbrace x \doteq t \rbrace\).
+
+    Moving on, if the algorithm successfully terminates:
+    \begin{itemize}
+        \item All the actions have been exhaustively applied, so each pair in \(E\) is of the form \(x \doteq t\) with \(x \in \gls{vars}\);
+        \item Using a similar argument, the variables in the first component of all the pairs in \(E\) are pairwise disjoint and they do not occur in any second component of a pair in \(E\).
+    \end{itemize}
+    Hence, if the algorithm succesfully terminates, the obtained set is solved.
+
+    If the algorithm instead halts with failure, the obtained set of pairs does not have a unifier, since one of the following holds:
+    \begin{itemize}
+        \item \(f(s_1,\dotsc,s_n) \doteq g(t_1,\dotsc,t_m)\) with \(f \ne g\) occurs in \(E\), and these two terms are not unifiable;
+        \item \(x \doteq t\) where \(x\) is a proper sub-term of \(t\) occurs in \(E\) and these terms are not unifiable.
+    \end{itemize}
+    This consideration concludes the proof.
+\end{proof}
+
+\begin{cor}[MM and \gls{mgu}]
+    Lemma~\ref{lem:uni-mgu} implies that, if the algorithm~\ref{alg:mm} succeeds, \(E^\prime\) determines an \gls{mgu} of \(E\).
+\end{cor}

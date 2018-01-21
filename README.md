@@ -3,7 +3,7 @@
 ## Content
 
 + [x] Unification
-+ [ ] Procedural interpretation
++ [x] Procedural interpretation
 + [ ] Pure Prolog
 + [ ] Negation: Procedural interpretation
 + [ ] Declarative interpretation

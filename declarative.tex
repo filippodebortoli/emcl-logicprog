@@ -54,6 +54,51 @@
     \end{enumerate}
 \end{dfn}
 
+\begin{dfn}[Term models]
+    The \emph{term algebra} \(J\) for \gls{funcs} is defined as follows:
+    its domain is \gls{TU} and \(F_J(t_1,\dotsc,t_n) := f(t_1,\dotsc,t_n)\) for all \(f \in \gls{funcs}^{(n)}\).
+    
+    A \emph{term interpretation} \(I\) for \gls{funcs} and \gls{preds} consists of the term algebra for \gls{funcs} and the set \(I \subseteq \gls{TB}\) denoting the set of atoms mapped to \(\top\).
+
+    The interpretation \(I\) is a \emph{term model} of a set \(S\) of expressions iff \(I\) is a term interpretation and \(I\) is a model of \(S\).
+\end{dfn}
+
+\begin{dfn}[Herbrand models]
+    The \emph{Herbrand algebra} \(J\) for \gls{funcs} is defined as follows:
+    its domain is \gls{HU} and \(F_J(t_1,\dotsc,t_n) := f(t_1,\dotsc,t_n)\) for all \(f \in \gls{funcs}^{(n)}\).
+    
+    A \emph{Herbrand interpretation} \(I\) for \gls{funcs} and \gls{preds} consists of the Herbrand algebra for \gls{funcs} and the set \(I \subseteq \gls{HB}\) denoting the set of ground atoms mapped to \(\top\).
+
+    The interpretation \(I\) is a \emph{Herbrand model} of a set \(S\) of expressions iff \(I\) is a Herbrand interpretation and \(I\) is a model of \(S\).
+    A \emph{least Herbrand model} \(I\) for a set \(S\) of expressions satisfies \(I \subseteq I^\prime\) for all Herbrand models \(I^\prime\) of \(S\).
+\end{dfn}
+
+\begin{dfn}[Implication tree]
+    An \emph{implication tree} wrt a program \prog is a finite tree which nodes are atoms and:
+    \begin{enumerate}
+        \item if \(A\) is a node with direct descendants \(B_1,\dotsc,B_n\), then \(A \from B_1,\dotsc,B_n \in \inst(P)\),
+        \item if \(A\) is a leaf, then \(A \in \inst(P)\)
+    \end{enumerate}
+    where, for an expression \(E\) and a set of expressions \(S\), \(\inst(E)\) is the set of all instances of \(E\), \(\inst(S)\) is the set of all instances of all the elements of \(S\); \(\grnd(E)\) is the set of ground instances of \(E\) and \(\grnd(S)\) is the set of all ground instances of all the elements of \(S\).
+\end{dfn}
+
+\begin{dfn}[\(n\)-depth]
+    A query \(Q\) is \emph{\(n\)-deep} if every atom in \(Q\) is the root of an implication tree and \(n\) is the total number of nodes in these trees.
+\end{dfn}
+
+\begin{dfn}[\(T_\prog\)]
+    Given a program \prog and an interpretation \(I\),
+    \begin{equation*}
+        T_\prog = \lbrace A \mid A \from B_1,\dotsc,B_n \in \grnd(\prog), \lbrace B_1,\dotsc,B_n \rbrace \subseteq I \rbrace.
+    \end{equation*}
+\end{dfn}
+
+\begin{dfn}[Success set]
+    The \emph{success set} of a program \prog is
+    \begin{equation*}
+        \lbrace A \mid A\;\text{ground atom and there is a successful \gls{sld}-derivation of \(\prog \cup \lbrace A \rbrace\)}\rbrace.
+    \end{equation*}
+\end{dfn}
 \section{Algorithms}
 
 \section{Theorems \& friends}
@@ -94,6 +139,7 @@
 \end{proof}
 
 \begin{thm}[Soundness of \gls{sld}-resolution]
+    \label{sld:sound}
     If there exists a successful \gls{sld}-derivation of \(\prog \cup \lbrace Q_0 \rbrace\) with \gls{cas} \(\theta\), then \(P \models Q_0\theta\).
 \end{thm}
 \begin{proof}
@@ -101,3 +147,144 @@
     Then, the resultant of level \(n\) corresponds to \(R_n \colon Q_0\theta_1\dotsb\theta_n \from \square\).
     Thanks to Lemma~\ref{decl:lem-2}, this yields \(\prog \models Q_0\theta_1\dotsb\theta_n\), and \(Q_0\theta_1\dotsb\theta_n = Q_0\restr{(\theta_1\dotsb\theta_n)}{\Var(Q_0)} = Q_0\theta\), where \(\theta\) is the \gls{cas}.
 \end{proof}
+
+\begin{cor}[of Theorem~\ref{sld:sound}]
+    If there exists a successful \gls{sld}-derivation of \(\prog \cup \lbrace Q_0 \rbrace\), then \(\prog \models \exists{Q_0}\).
+\end{cor}
+\begin{proof}
+    From Theorem~\ref{sld:sound}, it follows that \(\prog \models Q_0\theta\) for some \gls{cas} \(\theta\).
+    Given a model \(I\) of \prog, \(I \models Q_0\theta\) holds; consequently, it also holds \(I \models \forall{(Q_0\theta)}\) and finally, \(I \models \exists{Q_0}\).
+    Therefore, \(\prog \models \exists{Q_0}\).
+\end{proof}
+
+\begin{lem}
+    \label{decl:lem-3}
+    Given a term interpretation \(I\), an atom \(A\) and a program \prog,
+    \begin{itemize}
+        \item \(I \models A\) iff \(\inst(A) \subseteq I\),
+        \item \(I \models \prog\) iff for each \(A \from B_1, \dotsc, B_n \in \inst(\prog)\) if \(\lbrace B_1,\dotsc,B_n \rbrace \subseteq I\) then \(A \in I\).
+    \end{itemize}
+\end{lem}
+
+\begin{lem}
+    \label{decl:lem-4}
+    The term interpretation
+    \begin{equation*}
+        \mathcal{C}(\prog) = \lbrace A \mid A\;\text{is the root of some implication tree wrt \prog}\,\rbrace
+    \end{equation*}
+    is a model of \prog.
+\end{lem}
+
+\begin{lem}
+    Given a Herbrand interpretation \(I\), an atom \(A\) and a program \prog,
+    \begin{itemize}
+        \item \(I \models A\) iff \(\grnd(A) \subseteq I\),
+        \item \(I \models \prog\) iff for each \(A \from B_1, \dotsc, B_n \in \grnd(\prog)\) if \(\lbrace B_1,\dotsc,B_n \rbrace \subseteq I\) then \(A \in I\).
+    \end{itemize}
+\end{lem}
+
+\begin{lem}
+    The Herbrand interpretation
+    \begin{equation*}
+        \mathcal{M}(\prog) = \lbrace A \mid A\;\text{is the root of some ground implication tree wrt \prog}\,\rbrace
+    \end{equation*}
+    is a model of \prog.
+\end{lem}
+
+\begin{lem}
+    \label{decl:lem-5}
+    Suppose \(Q\theta\) is \(n\)-deep for some \(n \ge 0\).
+    Then for every selection rule \rulesel there exists a successful \gls{sld}-derivation of \(\prog \cup \lbrace Q \rbrace\) with \gls{cas} \(\eta\) such that \(Q\eta\) is more general than \(Q\theta\).
+\end{lem}
+
+\begin{thm}[Completeness of \gls{sld}-resolution]
+    \label{sld:comp}
+    Suppose that \(\theta\) is a correct answer substitution of \(Q\).
+    Then, for every selection rule \rulesel there exists a successful \gls{sld}-derivation of \(\prog \cup \lbrace Q \rbrace\) with \gls{cas} \(\eta\) such that \(Q\eta\) is more general than \(Q\theta\).        
+\end{thm}
+\begin{proof}
+    Let \(Q = A_1,\dotsc,A_m\).
+    Let \(\theta\) be a correct answer substitution of \(Q\).
+    This implies that \(\prog \models Q\theta\).
+    Since \(\mathcal{C}(\prog) \models \prog\) as said in Lemma~\ref{decl:lem-4} yields \(\mathcal{C}(\prog) \models A_1\theta,\dotsc,A_m\theta\), which, in turns, by Lemma~\ref{decl:lem-3}, allows to say that \(\inst(A_i\theta) \subseteq \mathcal{C}(\prog)\) for every \(i = ito{m}\).
+    In particular, \(A_i\theta \in \mathcal{C}(\prog)\) for all \(i = \ito{m}\), which means that \(A_1\theta,\dotsc,A_m\theta\) is \(n\)-deep for some \(n \ge 0\).
+    Using Lemma~\ref{decl:lem-5}, we can conclude that our original claim holds.
+\end{proof}
+
+\begin{cor}[of Theorem~\ref{sld:comp}]
+    Suppose that \(\prog \models \exists{Q}\).
+    Then, there exists a successful \gls{sld}-derivation of \(\prog \cup \lbrace Q \rbrace\).
+\end{cor}
+\begin{proof}
+    Due to \(\prog \models \exists{Q}\) implying that \(\prog \models Q\theta\) for some substitution \(\theta\), we can say that \(\theta\) is a correct answer substitution of \(Q\).
+    By Theorem~\ref{sld:comp}, this yields the result.
+\end{proof}
+
+\begin{thm}[Least Herbrand model]
+    \(\mathcal{M}(\prog)\) is the least Herbrand model of \prog.    
+\end{thm}
+\begin{proof}
+    Let \(I\) be a Herbrand model of \prog, and let \(a \in \mathcal{M}(\prog)\).
+    By induction on \(i\), number of nodes in the ground implication tree wrt \prog with root \(A\).
+    \begin{description}
+        \item[I.B. \((i = 1)\)] Since \(A\) is the only node, it is a leaf, so \(A \in \grnd(\prog)\).
+        This implies that \(I \models A\) (since \(I \models \prog\), hence \(A \in I\).
+        \item[I.H.] Assume that the claim holds for \(i \ge 1\).
+        \item[I.C. (\(i \to i+1\))]
+        Let \(B_1,\dotsc,B_n\) be the direct descendants of \(A\).
+        By induction hypothesis on the subtrees which roots are \(B_1,\dotsc,B_n\), \(B_1,\dotsc,B_n \in I\); moreover, \(A \from B_1,\dotsc,B_n \in \grnd(\prog)\).
+        From \(B_1,\dotsc,B_n \in I\) we deduce that \(I \models A\) must hold, hence \(A \in I\).
+    \end{description}
+\end{proof}
+
+\begin{thm}
+    For every ground atom \(A\), \(\prog \models A\) iff \(\mathcal{M}(\prog) \models A\).
+\end{thm}
+\begin{proof}
+    \begin{description}
+        \item[``\(\to\)''] Since \(\prog \models A\) and \(\mathcal{M}(\prog) \models \prog\), it follows that \(\mathcal{M}(\prog) \models A\).
+        \item[``\(\from\)''] Let
+        \begin{equation*}
+            I_H := \lbrace A \mid A\;\text{is a ground atom and \(I \models A\)}\,\rbrace
+        \end{equation*}
+        be a Herbrand interpretation.
+        Assume that \(I \models \prog\).
+        Then, \(I \models B \from B_1,\dotsc,B_n\) for all \(B \from B_1,\dotsc,B_n \in \grnd(\prog)\).
+        This means that if \(I \models B_1\),\ldots,\(I \models B_n\) --- that is, \(B_1,\dotsc,B_n \in I_H\) --- then \(I \models B\), hence \(B \in I_H\).
+
+        Therefore, \(I_H \models P\); from this, having assumed that \(A \in \mathcal{M}(\prog)\) and being it the least Herbrand model, we can conclude that \(A \in I_H\) and \(I \models A\).
+    \end{description}
+\end{proof}
+
+\begin{thm}
+    If \(T\) is a continuous operator on a CPO, then \(T^\omega\) exists and is the least (pre-)fixpoint of \(T\).
+\end{thm}
+
+\begin{lem}
+    The operator \(T_\prog\) is finitary and monotonic.
+\end{lem}
+
+\begin{lem}
+    A Herbrand interpretation \(I\) is a model of \prog iff \(T_\prog(I) \subseteq I\).
+\end{lem}
+\begin{proof}
+    \(I \models \prog\) iff for every \(A \from B_1,\dotsc,B_n \in \grnd(\prog)\), \(\lbrace B_1,\dotsc,B_n \rbrace \subseteq I\) implies \(A \in I\).
+    This is equivalent to say that, for every ground atom \(A\), \(A \in T_\prog(I)\) implies \(A \in I\), that is, \(T_\prog(I) \subseteq I\).
+\end{proof}
+
+\begin{thm}
+    \(\mathcal{M}(\prog)\) is the fixpoint of \(T_\prog\) and equals 
+    \begin{equation*}
+        T_\prog^\omega = \lbrace A \mid A\;\text{ground atom}\;,\prog\models A \rbrace.
+    \end{equation*}
+\end{thm}
+
+\begin{thm}
+    For a ground atom \(A\), the following are equivalent:
+    \begin{enumerate}
+        \item \(\mathcal{M}(\prog) \models A\),
+        \item \(\prog \models A\),
+        \item every \gls{sld}-tree for \(\prog \cup \lbrace A \rbrace\) is successful,
+        \item \(A\) is in the success set of \(\prog\).
+    \end{enumerate}
+\end{thm}

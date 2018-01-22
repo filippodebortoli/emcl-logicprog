@@ -1,0 +1,103 @@
+\chapter{Declarative interpretation}
+
+\section{Definitions}
+
+\begin{dfn}[Algebra]
+    An \emph{algebra} (or \emph{pre-interpretation}) \(J\) for \gls{funcs} consists of:
+    \begin{enumerate}
+        \item A non-empty \emph{domain} \(D\),
+        \item for all \(f \in \gls{funcs}^{(n)}\) and \(n \ge 0\), a mapping \(f_J \colon D^n \to D\). 
+    \end{enumerate}
+    A \emph{state} \(\sigma\) over \(D\) is a mapping \(\sigma \colon \gls{vars} \to D\).
+    The state \(\sigma\) is extended to \gls{TU} in the following way: \(\sigma \colon \gls{TU} \to D\) such that \(\sigma(f(t_1,\dotsc,t_n)) = f_J(\sigma(t_1),\dotsc,\sigma(t_n))\) for every \(f \in \gls{funcs}^{(n)}\).
+\end{dfn}
+
+\begin{dfn}
+    An \emph{interpretation} \(I\) for \gls{funcs} and \gls{preds} consists of an algebra \(J\) for \gls{funcs} (with domain \(D\)), together with a relation \(p_I \subseteq D^n\) for all \(p \in \gls{preds}^{(n)}\) and \(n \ge 0\).
+\end{dfn}
+
+\begin{dfn}[Herbrand stuff]
+    Given \gls{funcs} and \gls{preds}:
+    \begin{enumerate}
+        \item the \emph{Herbrand universe} \gls{HU} is equal to \(TU_{\gls{funcs},\emptyset}\),
+        \item the \emph{Herbrand base} \gls{HB} is equal to \(TB_{\gls{preds},\gls{funcs},\emptyset}\).
+    \end{enumerate}
+\end{dfn}
+
+\begin{dfn}[Expressions, truth and models]
+    An \emph{expression} is an atom, a query, a clause or a resultant.
+    An expression \(E\) is \emph{true in \(I\) under \(\sigma\)}, in symbols \(I \models_{\sigma} E\), according to the following schema:
+    \begin{enumerate}
+        \item \(I \models_{\sigma} p(t_1,\dotsc,t_n)\) iff \(\sigma(t_1),\dotsc,\sigma(t_n)) \in p_I\),
+        \item \(I \models_\sigma A_1,\dotsc,A_n\) iff \(I \models_\sigma A_i\) for \(i = \ito{n}\),
+        \item \(I \models_\sigma A \from \mathbf{B}\) iff \(I \models_\sigma \mathbf{B}\) implies \(I \models_\sigma A\),
+        \item \(I \models_\sigma \mathbf{A} \from \mathbf{B}\) iff \(I \models_\sigma \mathbf{B}\) implies \(I \models_\sigma \mathbf{A}\),
+    \end{enumerate}
+    If \(x_1,\dotsc,x_k\) are the variables occurring in \(E\), its \emph{existential closure} \(\exists{E}\) is \(\exists{x_1},\dotsc,\exists{x_k}E\), while the \emph{universal closure} \(\forall{E}\) is \(\forall{x_1},\dotsc,\forall{x_k}E\); moreover:
+    \begin{enumerate}
+        \item \(I \models \exists{E}\) iff \(I \models_\sigma E\) holds for some state \(\sigma\),
+        \item \(I \models \forall{E}\) iff \(I \models_\sigma E\) holds for every state \(\sigma\),
+        \item \(I\) is a \emph{model} of \(E\), in symbols \(I \models E\), iff \(I \models \forall{E}\).
+    \end{enumerate}
+\end{dfn}
+
+\begin{dfn}[Consequence]
+    Given sets of expressions \(S\), \(T\) and an interpretation \(I\), \(I\) is a \emph{model} of \(S\) iff \(I \models E\) for all \(E \in S\).
+    The set \(T\) is a \emph{logical consequence} of \(S\), in symbols \(S \models T\), iff every model of \(S\) is a model of \(T\).
+\end{dfn}
+
+\begin{dfn}[Correct substitutions]
+    For a program \prog, a query \(Q_0\) and a substitution \(\theta\),
+    \begin{enumerate}
+        \item \(\restr{\theta}{\Var(Q_0)}\) is a \emph{correct answer substitution} of \(Q_0\) iff \(\prog \models Q_0\theta\);
+        \item \(Q_0\theta\) is a \emph{correct instance} of \(Q_0\) iff \(\prog \models Q_0\theta\).
+    \end{enumerate}
+\end{dfn}
+
+\section{Algorithms}
+
+\section{Theorems \& friends}
+
+\begin{lem}
+    \label{decl:lem-1}
+    Let \(Q \sldstep{c}{\theta} Q^\prime\) be an \gls{sld}-derivation step and \(Q\theta \from Q^\prime\) the resultant associated with it.
+    Then, \(c \models Q\theta \from Q^\prime\).
+\end{lem}
+\begin{proof}
+    Let \(Q = \mathbf{A}, B, \mathbf{C}\) with selected atom \(B\). Let \(H \from \mathbf{B}\) be the input clause and \(Q^\prime = (\mathbf{A},\mathbf{B},\mathbf{C})\theta\).
+
+    Since \(H \from \mathbf{B}\) is a variant of \(c\), it follows that \(c \models H \form \mathbf{B}\).
+    Being \(H\theta \from \mathbf{B}\theta\) an instance of the input clause, \(c \models H\theta \from \mathbf{B}\theta\).
+    The substitution \(\theta\) is a unifier for \(H\) and \(B\), hence \(c \models B\theta \from \mathbf{B}\theta\).
+    The rest of the context remains unchanged, therefore we can conclude that \(c \models Q\theta \from Q^\prime\).
+\end{proof}
+
+\begin{lem}
+    \label{decl:lem-2}
+    Let \(\xi\) be an \gls{sld}-derivation of \(\prog \cup \lbrace Q_0 \rbrace\).
+    For \(i \ge 0\), let \(R_i\) be the resultant of level \(i\) of \(\xi\).
+    Then, \(P \models R_i\).
+\end{lem}
+\begin{proof}
+    By induction on the level \(i \ge 0\).
+    \begin{description}
+        \item[I.B. \((i = 0)\)] The implication \(R_0 \colon Q_0 \from Q_0\) holds trivially, hence \(P \models R_0\).
+        \item[I.B. \((i = 1)\)] We know that \(R_1 \colon Q_0\theta_1 \from Q_1\). Using Lemma~\ref{decl:lem-1}, we obtain that \(P \models R_1\).
+        \item[I.H.] Assume that \(P \models R_i\).
+        \item[I.C. \((i \to i+1)\)] Let \(Q_i\theta_{i+1} \from Q_{i+1}\) be the resultant associated with the \((i+1)\)-st derivation step of \(\xi\).
+        Then, the resultant of level \(i+1\), \(R_{i+1} \colon Q_0\theta_1\dotsb\theta_{i+1} \from Q_{i+1}\) is a logical consequence of it. (Can we really say it?)
+
+        Thanks to the I.H. \(\prog \models Q_0\theta_1\dotsb\theta_i \from Q_i\).
+        From Lemma~\ref{decl:lem-1}, \(\prog \models Q_i\theta_{i+1} \from Q_{i+1}\).
+        Since \(R_i\theta_{i+1} = Q_0\theta_1\dotsb\theta_{i+1} \from Q_i\theta_{i+1}\), this let us conclude that \(\prog \models R_{i+1}\). 
+    \end{description}
+\end{proof}
+
+\begin{thm}[Soundness of \gls{sld}-resolution]
+    If there exists a successful \gls{sld}-derivation of \(\prog \cup \lbrace Q_0 \rbrace\) with \gls{cas} \(\theta\), then \(P \models Q_0\theta\).
+\end{thm}
+\begin{proof}
+    Let \(\xi\) be a successful \gls{sld}-derivation.
+    Then, the resultant of level \(n\) corresponds to \(R_n \colon Q_0\theta_1\dotsb\theta_n \from \square\).
+    Thanks to Lemma~\ref{decl:lem-2}, this yields \(\prog \models Q_0\theta_1\dotsb\theta_n\), and \(Q_0\theta_1\dotsb\theta_n = Q_0\restr{(\theta_1\dotsb\theta_n)}{\Var(Q_0)} = Q_0\theta\), where \(\theta\) is the \gls{cas}.
+\end{proof}

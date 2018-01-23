@@ -99,6 +99,32 @@
     the \gls{cas} of \(Q_0\) wrt \(\xi\) is \(\restr{(\theta_1\dotsb\theta_n)}{\Var(Q_0)}\).
 \end{dfn}
 
+\begin{dfn}[Extended selection rule]
+    An \emph{extended selection rule} is a function \rulesel which, given a pre-\gls{sldnf}-tree \(F = (\mathcal{T},T,\subs)\), selects a literal in every non-empty, unmarked leaf in every tree in \(\mathcal{T}\).
+
+    A \gls{sldnf}-tree \(F\) is \emph{according to} \rulesel iff it is the limit of a sequence of pre-\gls{sldnf}-trees in which literals are selected according to \rulesel.
+    
+    The selection rule \rulesel is \emph{safe} if it never selects a non-ground negative literal.
+\end{dfn}
+
+\begin{dfn}[Allowed vs Blocked]
+    A query \(Q\) is \emph{blocked}, when it is non-empty and contains exclusively non-ground negative literals.
+    A query \(Q\) is \emph{allowed} if every variable occurring in \(Q\) occurs in one of its positive literals.
+    A clause \(H \from \mathbf{B}\) is allowed if \(\neg H\) and \(\mathbf{B}\) are both allowed --- thus, a fact \(H\) is allowed iff it is a ground atom.
+    A program is \emph{allowed} if all its clauses are allowed.
+
+    \(\prog \cup \lbrace Q \rbrace\) \emph{flounders} if some \gls{sldnf}-tree for it contains a blocked node.
+\end{dfn}
+
+\begin{dfn}[Extended Prolog tree]
+    Let \prog be an extended program and \(Q_0\) an extended query.
+    The \emph{extended} Prolog tree for \(\prog \cup \lbrace Q_0 \rbrace\) is a forest of finitely branching, ordering trees of queries, possibly marked with \emph{success} or \emph{failure}, produced in the following way:
+    \begin{enumerate}
+        \item Start with the forest \((\lbrace T_{Q_0} \rbrace, T_{Q_0},\subs)\) where \(T_{Q_0}\) contains the single node \(Q_0\) and \(\subs(Q_0)\) is undefined;
+        \item Repeatedly apply to the current forest \(F = (\mathcal{T},T,\subs)\) and leftmost unmarked leaf \(Q\) in \(T_1\), where \(T_1 \in \mathcal{T}\) is the leftmost, most nested subsidiary tree with an unmarked leaf, the operation \textbf{expand}\((F,Q)\).
+    \end{enumerate}
+\end{dfn}
+
 \section{Algorithms}
 
 \begin{dfn}[Extensions]
@@ -122,3 +148,38 @@
         \end{itemize}
     \end{enumerate}
 \end{dfn}
+
+\paragraph{Prolog tree expansion.}
+The operation \textbf{expand}\((F,Q)\) is defined by:
+\begin{enumerate}
+    \item if \(Q = \square\), mark \(Q\) with \emph{success} and, if \(T_1 \ne T\), remove from \(T_1\) all edges to the right of the branch that ends with \(Q\);
+    \item if \(Q\) has no LDNF-resolvents, then mark \(Q\) with \emph{failure};
+    \item let \(L\) be the leftmost literal in \(Q\):
+    \begin{itemize}
+        \item if \(L\) is positive, add for each clause that is applicable to \(L\) an LDNF-resolvent as descendant of \(Q\), such that the order of the clauses is respected;
+        \item if \(L = \neg A\) is negative,
+        \begin{itemize}
+            \item if \(\subs(Q)\) is undefined, add a new tree \(T^\prime = A\) and set \(\subs(Q)\) to \(T^\prime\);
+            \item if \(\subs(Q)\) is defined and successful, then mark \(Q\) with \emph{failure};
+            \item if \(\subs(Q)\) is defined and finitely failed, then add in \(T_1\) the  \gls{sldnf}-resolvent of \(Q\) as the only direct descendant of \(Q\).
+        \end{itemize}
+    \end{itemize}
+\end{enumerate}
+
+\section{Theorems \& friends}
+
+\begin{thm}
+    \begin{enumerate}
+        \item Every \gls{sldnf}-tree is the limit of a unique sequence of pre-\gls{sldnf}-trees.
+        \item If the \gls{sldnf}-tree \(F\) is the limit of the sequence \(F_0,F_1,\dotsc\), then:
+        \begin{enumerate}
+            \item \(F\) is successful and yields \gls{cas} \(\theta\) iff some \(F_i\) is successful and yields \gls{cas} \(\theta\),
+            \item \(F\) is finitely failed iff some \(F_i\) is finitely failed.
+        \end{enumerate}
+    \end{enumerate}
+\end{thm}
+
+\begin{thm}
+    Suppose that \(\prog\) and \(Q\) are allowed.
+    Then, \(\prog \cup \lbrace Q \rbrace\) does not flounder and if \(\theta\) is a \gls{cas} of \(Q\), then \(Q\theta\) is ground.
+\end{thm}

@@ -1,0 +1,124 @@
+\chapter{Negation: Procedural int.}
+
+\section{Definitions}
+
+\begin{dfn}[Literal]
+    A \emph{literal} is of the form \(A\) or \(\neg A\), where \(A\) is an atom.
+    A \emph{ground literal} is derived from a ground atom. 
+\end{dfn}
+
+\begin{dfn}
+    An \emph{extended query} is a finite sequence of literals.
+    An \emph{extended clause} is of the form \(H \from \mathbf{B}\) where \(H\) is an atom and \(\mathbf{B}\) an extended query.
+    An \emph{extended program} is a finite set of extended clauses.
+\end{dfn}
+
+\begin{dfn}[\gls{naf}]
+    \begin{enumerate}
+        \item Suppose \(\neg A\) is selected in the query \(Q = \mathbf{L}, \neg A, \mathbf{N}\);
+        \item if \(\prog \cup \lbrace A \rbrace\) succeeds, then the derivation of \(\prog \cup \lbrace Q \rbrace\) fails at this point;
+        \item if all derivations of \(\prog \cup \lbrace A \rbrace\) fail, then \(Q\) resolves to \(Q^\prime = \mathbf{L},\mathbf{N}\).
+    \end{enumerate}
+    We can say that \(\neg A\) succeeds iff \(A\) finitely fails, and \(\neg A\) finitely fails iff \(A\) succeeds.
+\end{dfn}
+
+\begin{dfn}
+    In \gls{sldnf}, two cases are distinguished:
+    \begin{enumerate}
+        \item \(Q = \mathbf{L}, A, \mathbf{N}\) is the query, and the selected literal \(A\) is positive:
+        \begin{itemize}
+            \item \(H \from \mathfb{M}\) variant of a clause \(c\) which is variable-disjoint with \(Q\), \(\theta\) \gls{mgu} of \(A\) and \(H\),
+            \item \(Q^\prime = (\mathbf{L},\mathbf{M},\mathbf{N})\theta\) \emph{\gls{sldnf}-resolvent} of \(Q\) and \(c\) wrt \(A\) with \(\theta\)
+            \item the \gls{sldnf}-derivation step as \(Q \sldstep{c}{\theta} Q^\prime\).
+        \end{itemize}
+        \item \(Q = \mathbf{L}, \neg A, \mathbf{N}\) is the query, and the selected literal \(\neg A\) is negative and \emph{ground}:
+        \begin{itemize}
+            \item \(Q^\prime = \mathbf{L},\mathbf{N}\) is the \gls{sldnf}-resolvent of \(Q\) wrt \(\neg A\) with \(\epsilon\);
+            \item the \gls{sldnf}-derivation step as \(Q \sldstep{\epsilon}{} Q^\prime\).
+        \end{itemize}
+    \end{enumerate}
+\end{dfn}
+
+\begin{dfn}
+    A maximal sequence of \gls{sldnf}-derivation steps
+    \begin{equation*}
+        Q_0 \sldstep{c_1}{\theta_1} Q_1 \dotsb Q_n
+        \sldstep{c_{n+1}}{\theta_{n+1}} Q_{n+1} \dotsb
+    \end{equation*}
+    is a \emph{pseudo-derivation} of \(\prog \cup \lbrace Q_0 \rbrace\) if:
+    \begin{itemize}
+        \item \(Q_0,\dotsc,Q_{n+1},\dotsc\) are either empty queries or have one selected literal in it;
+        \item \(\theta_1,\dotsc,\theta_{n+1},\dotsc\) are substitutions;
+        \item \(c_1,\dotsc,c_{n+1},\dotsc\) are all clauses of \(\prog\), in case a positive literal has been selected in the preceding query;
+        \item for every \gls{sldnf}-derivation step with input clause, standardization apart holds.
+    \end{itemize}
+\end{dfn}
+
+\begin{dfn}[Forests]
+    \label{dfn:forest}
+    A \emph{forest} is a triple \(F = (\mathcal{T},T,\subs)\) where:
+    \begin{enumerate}
+        \item \(\mathcal{T}\) is a set of trees where
+        \begin{itemize}
+            \item nodes are queries,
+            \item a literal is selected in each non-empty query,
+            \item leaves may be marked as \emph{success}, \emph{failure} or \emph{floundered}.
+        \end{itemize}
+        \item \(T \in \mathcal{T}\) is the main tree;
+        \item \(\subs\) assigns to some nodes of trees in \(\mathcal{T}\) with selected negative ground literal \(\neg A\) a subsidiary tree of \(\mathcal{T}\) with root \(A\).
+    \end{enumerate}
+    The tree \(T\) is \emph{successful} iff it contains a leaf marked as \emph{success}; it is \emph{finitely failed}, iff it is finite and all leaves are marked as \emph{failure}.
+\end{dfn}
+
+\begin{dfn}[pre-\gls{sldnf}-trees]
+    The class of \emph{pre-\gls{sldnf}-trees} for a program \prog is the smallest class \(\mathcal{C}\) of forests such that:
+    \begin{enumerate}
+        \item for every query \(Q\), the initial pre-\gls{sldnf}-tree \((\lbrace T_Q \rbrace, T_Q, \subs)\) is in \(\mathcal{C}\), where \(T_Q\) contains the single node \(Q\) and \(\subs(Q)\) is undefined;
+        \item for every \(F \in \mathcal{C}\), the extension of \(F\) is in \(\mathcal{C}\).
+    \end{enumerate}
+\end{dfn}
+
+\begin{dfn}[\gls{sldnf}-trees]
+    A \gls{sldnf}-tree is a limit of a sequence \(F_0,F_1,\dotsc\), where \(F_0\) is the initial pre-\gls{sldnf}-tree and \(F_{i+1}\) is the extension of \(F_i\), for \(i \in \mathbb{N}\).
+
+    A \gls{sldnf}-tree for \(\prog \cup \lbrace Q \rbrace\) is a \gls{sldnf}-tree in which \(Q\) is the root of the main tree.
+
+    A \gls{sldnf}-tree is \emph{successful} (resp. \emph{finitely failed}) iff its main tree is.
+    A \gls{sldnf}-tree is \emph{finite} iff no infinite path of nodes \(N_0,N_1,\dotsc\) exists in it, such that, for all \(i \in \mathbb{N}\), either \(N_{i+1}\) is a direct descendant of \(N_i\) or it is the root of \(\subs(N_i)\).
+\end{dfn}
+
+\begin{dfn}[\gls{sldnf}-derivation]
+    A \emph{\gls{sldnf}-derivation} of \(\prog \cup \lbrace Q \rbrace\) is a branch in the main tree of a \gls{sldnf}-tree \(F\), for \(\prog \cup \lbrace Q \rbrace\) together with the set of all trees in \(F\) which roots can be reached from the nodes in the branch.
+
+    A \gls{sldnf}-derivation is \emph{successful} iff it ends with \(square\).
+    In that case, given that the main tree of an \gls{sldnf}-tree for \(\prog \cup \lbrace Q_0 \rbrace\) contains a branch
+    \begin{equation*}
+        \xi = Q_0 \sldstep{}{\theta_1} Q_1 \dotsb Q_{n-1}
+        \sldstep{}{\theta_n} \square
+    \end{equation*}
+    the \gls{cas} of \(Q_0\) wrt \(\xi\) is \(\restr{(\theta_1\dotsb\theta_n)}{\Var(Q_0)}\).
+\end{dfn}
+
+\section{Algorithms}
+
+\begin{dfn}[Extensions]
+    An \emph{extension} of a forest \(F\) (as in Definition~\ref{dfn:forest}) is obtained in the following way:
+    \begin{enumerate}
+        \item Every occurrence of the empty query is marked as \emph{success};
+        \item for every non-empty query \(Q\), which is an unmarked leaf in some tree in \(\mathcal{T}\), perform the following action, assuming that \(L\) is the selected literal of \(Q\):
+        \begin{itemize}
+            \item Assume that \(L\) is positive.
+            If \(Q\) has no \gls{sldnf}-resolvents, then \(Q\) is marked as \emph{failure}.
+            Otherwise, for every clause \(c\) which is applicable to \(L\), exactly one direct descendant of \(Q\) is added; this descendant is an \gls{sldnf}-resolvent of \(Q\) and \(c\) wrt \(L\).
+            \item Assume that \(L = \neg A\) is negative.
+            If \(A\) is non-ground, then \(Q\) is marked as \emph{floundered}.
+            Otherwise, a case on \(\subs(Q)\) is applied:
+            \begin{itemize}
+                \item if \(\subs(Q)\) is undefined, a new tree \(T^\prime\) with a single node \(A\) is added to \(\mathcal{T}\) and \(\subs(Q)\) is set to \(T^\prime\);
+                \item if \(\subs(Q)\) is defined and successful, then \(Q\) is marked as \emph{failure};
+                \item if \(\subs(Q)\) is defined and finitely failed, the \gls{sldnf}-resolvent of \(Q\) is added as the only direct descendant of \(Q\);
+                \item Otherwise, no action is applied.
+            \end{itemize} 
+        \end{itemize}
+    \end{enumerate}
+\end{dfn}

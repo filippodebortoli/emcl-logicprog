@@ -5,8 +5,8 @@
 + [x] Unification
 + [x] Procedural interpretation
 + [ ] Pure Prolog
-+ [ ] Negation: Procedural interpretation
-+ [ ] Declarative interpretation
++ [x] Negation: Procedural interpretation
++ [x] Declarative interpretation
 + [ ] Negation: Declarative interpretation
 + [ ] Termination
 + [ ] ASP

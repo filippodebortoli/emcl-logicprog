@@ -1,0 +1,103 @@
+\chapter{Negation: Declarative int.}
+
+\paragraph{Disclaimer.} Some notions already discussed in the Logic course will be first omitted. If time will be available, I will add them.
+
+\section{Definitions}
+
+\begin{dfn}[Completion]
+    The \emph{completion} of an extended program \prog, denoted by \(\comp(\prog)\), is the set of formulas constructed from \prog by applying the following steps:
+    \begin{enumerate}
+        \item Associate with every \(n\)-ary predicate symbol \(p\) a sequence of pair-wise distinct variables \(x_1,\dotsc,x_n\) not occurring in \prog;
+        \item transform each clause \(c = p(t_1,\dotsc,t_n) \from \mathbf{B}\) into
+        \begin{equation*}
+            p(x_1,\dotsc,x_n) \from
+            x_1 = t_1,\dotsc,x_n = t_n, \mathfb{B}
+        \end{equation*}
+        \item transform each resulting formula \(p(x_1,\dotsc,x_n) \from G\) into
+        \begin{equation*}
+            p(x_1,\dotsc,x_n) \from \exists{\mathbf{z}} G,
+        \end{equation*}
+        where \(\mathbf{z}\) is a sequence of the elements of \(\Var(c)\);
+        \item for every \(n\)-ary predicate symbol \(p\), let
+        \begin{equation*}
+            p(x_1,\dotsc,x_n) \from \exists{\mathbf{z}_i} G_i \qquad i = \oto{m}, m \ge 0
+        \end{equation*}
+        be all the implications obtained in the previous step:
+        \begin{itemize}
+            \item if \(m \ge 0\) replace the implications by the formula
+            \begin{equation*}
+                \forall{x_1,\dotsc,x_n} p(x_1,\dotsc,x_n) \leftrightarrow \exists{\mathbf{z}_1} G_1 \lor \dotsb \lor \exists{\mathbf{z}_m} G_m
+            \end{equation*}
+            \item otherwise, add
+            \begin{equation*}
+                \forall{x_1,\dotsc,x_n} p(x_1,\dotsc,x_n) \leftrightarrow \bot
+            \end{equation*}
+        \end{itemize}
+        \item add the standard axioms of equality: reflexivity, symmetry, transitivity, \(f\)-substitutivity, \(p\)-substitutivity;
+        \item add the standard axioms of inequality:
+        \begin{itemize}
+            \item if for some \(i = \ito{n}\), \(x_i \ne y_i\), then \(f(x_1,\dotsc,x_n) \ne f(y_1,\dotsc,y_n)\);
+            \item if \(f \ne g\), then \(f(x_1,\dotsc,x_n) \ne g(y_1,\dotsc,y_m)\);
+            \item if \(x\) is a proper subterm of \(t\), then \( \ne t\).
+        \end{itemize}
+    \end{enumerate}
+\end{dfn}
+
+\begin{dfn}
+    Given a program \prog, a query \(Q\) and a substitution \(\theta\),
+    \begin{itemize}
+        \item \(\restr{\theta}{\Var(Q)}\) is a correct answer substitution of \(Q\) iff \(\comp(\prog) \models Q\theta\),
+        \item \(Q\theta\) is a correct instance of \(Q\) iff \(\comp(\prog) \models Q\theta\).
+    \end{itemize}
+\end{dfn}
+
+\begin{dfn}[Dependency graph]
+    The \emph{dependency graph} \(D_\prog\) of an extended program \prog is a directed graph with labeled edges, where:
+    \begin{itemize}
+        \item the nodes are the predicate symbols of \prog,
+        \item the edges are either labeled by \(+\) (positive edge) or \(-\) (negative edge);
+        \item \(D_\prog\) has an edge \(p \edplus q\) iff \prog contains a clause \(p(s_1,\dotsc,s_m) \from \mathbf{L}, q(t_1,\dotsc,t_n),\mathbf{N}\);
+        \item \(D_\prog\) has an edge \(p \edminus q\) iff \prog contains a clause \(p(s_1,\dotsc,s_m) \from \mathbf{L}, \neg q(t_1,\dotsc,t_n),\mathbf{N}\);
+    \end{itemize}
+\end{dfn}
+
+\begin{dfn}[Programs and graphs]
+    Let \prog be an extended program, \(D_\prog\) its dependency graph, \(p,q\) predicate symbols and \(Q\) an extended query.
+    \begin{itemize}
+        \item \(p\) \emph{depends evenly} (resp. \emph{oddly}) on \(q\) iff there is a path in \(D_\prog\) from \(p\) to \(q\) with an even (resp. odd) number of negative edges;
+        \item \prog is \emph{strict} wrt \(Q\) iff no predicate symbol occurring in \(Q\) depends both evenly and oddly on a predicate symbol in the head of a clause in \prog;
+        \item \prog is \emph{hierarchical}, iff \(D_\prog\) is acyclic;
+        \item \prog is \emph{stratified}, iff no cycle containing a negative edge appear in \(D_\prog\).
+    \end{itemize}
+\end{dfn}
+
+\begin{rem}
+    \(p\) depends evenly on \(p\) always, since a \(0\)-path has even length.
+\end{rem}
+
+\section{Theorems \& friends}
+
+\begin{thm}
+    \label{dec-neg:thm-1}
+    If there exists a successful \gls{sldnf}-derivation of \(\prog \cup \lbrace Q \rbrace\) with \gls{cas} \(\theta\), then \(\comp(\prog) \models Q\theta\).
+\end{thm}
+
+\begin{cor}[of Theorem~\ref{dec-neg:thm-1}]
+    If there exists a successful \gls{sldnf}-derivation of \(\prog \cup \lbrace Q \rbrace\), then \(\comp(\prog) \models Q\theta\).
+\end{cor}
+
+\begin{rem}
+    In the general case, \gls{sldnf}-resolution is \emph{not complete}!
+    Several examples on the slides are meant ot show that\ldots
+\end{rem}
+
+\begin{thm}[Restricted completeness]
+    \label{dec-neg:thm-2}
+    Let \prog be a hierarchical and allowed program, \(Q\) an allowed query.
+    If \(\comp(\prog) \models Q\theta\) for some \(\theta\) such that \(Q\theta\) is ground, then there exists  a successful \gls{sldnf}-derivation of \(\prog \cup \lbrace Q \rbrace\) with \gls{cas} \(\theta\).
+\end{thm}
+
+\begin{rem}
+    Theorem~\ref{dec-neg:thm-2} holds, if the selection rule is \emph{safe}. Otherwise, it may not hold.
+\end{rem}
+

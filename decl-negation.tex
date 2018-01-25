@@ -75,6 +75,28 @@
     \(p\) depends evenly on \(p\) always, since a \(0\)-path has even length.
 \end{rem}
 
+\begin{dfn}[fairness]
+    An extended selection rule \rulesel is \emph{fair} if, for every \gls{sldnf}-tree \(F\) via \rulesel and for every brand \(\xi\) in \(F\), either \(\xi\) is failed or for every literal \(L\) occurring in a query of \(\xi\), some further instantiated version of \(L\) is selected within a finite number of derivation steps.
+\end{dfn}
+
+\begin{exa}
+    The selection rule ``select the leftmost literal'' is unfair.
+    On the other hand, ``select leftmost literal to the right of the literals introduced at the previous derivation step, if it exists, otherwise, select leftmost literal'' is a fair selection rule.
+\end{exa}
+
+\begin{dfn}
+    Let \prog be an extended program and \(I\) a Herbrand interpretation.
+    Then,
+    \begin{equation*}
+        T_\prog(I) := \lbrace H \mid H \from \mathbf{B} \in \grnd(\prog), I \models \mathbf{B} \rbrace.
+    \end{equation*}
+\end{dfn}
+
+\begin{rem}
+    If \prog is a definite program, the consequence operator has properties previously seen.
+    But now, all these nice properties are lost!
+\end{rem}
+
 \section{Theorems \& friends}
 
 \begin{thm}
@@ -101,3 +123,25 @@
     Theorem~\ref{dec-neg:thm-2} holds, if the selection rule is \emph{safe}. Otherwise, it may not hold.
 \end{rem}
 
+\begin{thm}
+    \label{de-neg:thm-3}
+    Let \prog be a hierarchical and allowed program, \(Q\) an allowed query, such that \prog is strict wrt \(Q\).
+    If \(\comp(\prog) \models Q\theta\) for some \(\theta\) such that \(Q\theta\) is ground, then there exists  a successful \gls{sldnf}-derivation of \(\prog \cup \lbrace Q \rbrace\) with \gls{cas} \(\theta\).
+\end{thm}
+
+\begin{rem}
+    Theorem~\ref{dec-neg:thm-3} holds, if the selection rule is \emph{safe} and \emph{fair}. Otherwise, it may not hold.
+\end{rem}
+
+\begin{lem}
+    Let \prog be an extended program and \(I\) a Herbrand interpretation.
+    Then, \(I \models \prog\) iff \(T_\prog(I) \subseteq I\).
+\end{lem}
+\begin{proof}
+    First, we know that \(I \models \prog\) iff \(I \models \mathbf{B}\) implies \(I \models H\) for all the ground clauses \(H \from \mathbf{B}\) in \(\grnd(\prog)\).
+    Since \(I\) is a Herbrand interpretation, \(I \models H\) is equivalent to \(H \in I\).
+    By definition of \(T_\prog(I)\), if \(I \models \mathbf{B}\), then \(H \in T_\prog(I)\).
+    Thus, we found that if \(H \in T_\prog(I)\), then \(H \in I\), hence \(T_\prog(I)\).
+
+    Going backwards yields the other side of the proof.
+\end{proof}

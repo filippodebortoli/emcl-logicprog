@@ -4,20 +4,88 @@
 
 \section{Definitions}
 
-\begin{dfn}[Completion]
-    The \emph{completion} of an extended program \prog, denoted by \(\comp(\prog)\), is the set of formulas constructed from \prog by applying the following steps:
-    \begin{enumerate}
-        \item Associate with every \(n\)-ary predicate symbol \(p\) a sequence of pair-wise distinct variables \(x_1,\dotsc,x_n\) not occurring in \prog;
-        \item transform each clause \(c = p(t_1,\dotsc,t_n) \from \mathbf{B}\) into
-        \begin{equation*}
-            p(x_1,\dotsc,x_n) \from
-            x_1 = t_1,\dotsc,x_n = t_n, \mathfb{B}
-        \end{equation*}
+% \begin{dfn}
+%     Given a program \prog, a query \(Q\) and a substitution \(\theta\),
+%     \begin{itemize}
+%         \item \(\restr{\theta}{\Var(Q)}\) is a \emph{correct answer substitution} of \(Q\) iff \(\comp(\prog) \models Q\theta\),
+%         \item \(Q\theta\) is a correct instance of \(Q\) iff \(\comp(\prog) \models Q\theta\).
+%     \end{itemize}
+% \end{dfn}
+
+\begin{dfn}
+    \label{decl-neg:dfn-1}
+    The \emph{dependency graph} \(D_\prog\) of an extended program \prog is a directed graph with labeled edges, where:
+    \begin{itemize}
+        \item the nodes are the predicate symbols of \prog,
+        \item the edges are either labeled by \(+\) (positive edge) or \(-\) (negative edge);
+        \item \(D_\prog\) has an edge \(p \edplus q\) if \prog contains \(p(s_1,\dotsc,s_m) \from \mathbf{L}, q(t_1,\dotsc,t_n),\mathbf{N}\);
+        \item \(D_\prog\) has an edge \(p \edminus q\) if \prog contains \(p(s_1,\dotsc,s_m) \from \mathbf{L}, \neg q(t_1,\dotsc,t_n),\mathbf{N}\);
+    \end{itemize}
+    Given \(p\) and \(q\) predicate symbols, \(p\) \emph{depends evenly} (resp. \emph{oddly}) on \(q\) if there is a path in \(D_\prog\) from \(p\) to \(q\) with an even (resp. odd) number of negative edges.
+
+    Given a program \prog and an extended query \(Q\), the program is:
+    \begin{itemize}
+        \item \emph{strict} wrt \(Q\), if no predicate symbol occurring in \(Q\) depends both evenly and oddly on a predicate symbol in the head of a clause in \prog;
+        \item \emph{hierarchical}, if \(D_\prog\) is acyclic;
+        \item \emph{stratified}, if no cycle containing a negative edge appear in \(D_\prog\).
+    \end{itemize}
+\end{dfn}
+
+\begin{rem}
+    As a conseguence of~\cref{decl-neg:dfn-1}, \(p\) always depends evenly on \(p\), since a \(0\)-path has even length.
+\end{rem}
+
+\begin{dfn}[fairness]
+    \label{decl-neg:dfn-2}
+    An extended selection rule \rulesel is \emph{fair} if, for every \gls{sldnf}-tree \(F\) via \rulesel and for every branch \(\xi\) in \(F\), either \(\xi\) is failed or for every literal \(L\) occurring in a query of \(\xi\), some further instantiated version of \(L\) is selected within a finite number of derivation steps.
+\end{dfn}
+
+\begin{exa}
+    The selection rule ``select the leftmost literal'' is unfair, according to~\cref{decl-neg:dfn-2}.
+    On the other hand, ``select leftmost literal to the right of the literals introduced at the previous derivation step, if it exists, otherwise, select leftmost literal'' is a fair selection rule.
+\end{exa}
+
+\begin{dfn}
+    The extended \emph{consequence operator} of a program \prog, given a Herbrand interpretation \(I\), is
+    \begin{equation*}
+        T_\prog(I) := \lbrace H \mid H \from \mathbf{B} \in \grnd(\prog), I \models \mathbf{B} \rbrace.
+    \end{equation*}
+\end{dfn}
+
+\begin{rem}
+    If \prog is a definite program, the consequence operator has properties previously seen.
+    But now, all these nice properties are lost!
+\end{rem}
+
+\begin{dfn}[Standardized Herbrand interpretation]
+    Let \(=\) be a binary predicate symbol, standing for \emph{equality}, not in \gls{preds} and let \(I\) be an interpretation for \gls{funcs} and \gls{preds}.
+    Then,
+    \begin{equation*}
+        I_= := I \cup \lbrace t = t \mid t \in \gls{HU}\rbrace
+    \end{equation*}
+    is called a \emph{standardized} Herbrand interpretation for \gls{funcs} and \(\gls{preds} \cup \lbrace = \rbrace\).
+\end{dfn}
+
+\begin{dfn}[Supported Herbrand interpretation]
+    A Herbrand interpretation \(I\) is \emph{supported} iff for every \(H \in I\) there is some ground clause \(H \from \mathbf{B}\) such that \(I \models \mathbf{B}\).
+\end{dfn}
+
+\section{Algorithms}
+
+\paragraph{Completion.}
+The \emph{completion} of an extended program \prog, denoted by \(\comp(\prog)\), is the set of formulas constructed from \prog by applying the following steps:
+\begin{enumerate}
+    \item Associate with every \(n\)-ary predicate symbol \(p\) a sequence of pair-wise distinct variables \(x_1,\dotsc,x_n\) not occurring in \prog;
+    \item transform each clause \(c \colon p(t_1,\dotsc,t_n) \from \mathbf{B}\) into
+    \begin{equation*}
+        p(x_1,\dotsc,x_n) \from
+        x_1 = t_1,\dotsc,x_n = t_n, \mathfb{B}
+    \end{equation*}
         \item transform each resulting formula \(p(x_1,\dotsc,x_n) \from G\) into
         \begin{equation*}
-            p(x_1,\dotsc,x_n) \from \exists{\mathbf{z}} G,
+            p(x_1,\dotsc,x_n) \from \exists{\mathbf{z}}\,G,
         \end{equation*}
-        where \(\mathbf{z}\) is a sequence of the elements of \(\Var(c)\);
+        where \(\mathbf{z}\) is a sequence of elements of \(\Var(c)\);
         \item for every \(n\)-ary predicate symbol \(p\), let
         \begin{equation*}
             p(x_1,\dotsc,x_n) \from \exists{\mathbf{z}_i} G_i \qquad i = \oto{m}, m \ge 0
@@ -41,70 +109,17 @@
             \item if \(x\) is a proper subterm of \(t\), then \( \ne t\).
         \end{itemize}
     \end{enumerate}
-\end{dfn}
-
-\begin{dfn}
-    Given a program \prog, a query \(Q\) and a substitution \(\theta\),
-    \begin{itemize}
-        \item \(\restr{\theta}{\Var(Q)}\) is a correct answer substitution of \(Q\) iff \(\comp(\prog) \models Q\theta\),
-        \item \(Q\theta\) is a correct instance of \(Q\) iff \(\comp(\prog) \models Q\theta\).
-    \end{itemize}
-\end{dfn}
-
-\begin{dfn}[Dependency graph]
-    The \emph{dependency graph} \(D_\prog\) of an extended program \prog is a directed graph with labeled edges, where:
-    \begin{itemize}
-        \item the nodes are the predicate symbols of \prog,
-        \item the edges are either labeled by \(+\) (positive edge) or \(-\) (negative edge);
-        \item \(D_\prog\) has an edge \(p \edplus q\) iff \prog contains a clause \(p(s_1,\dotsc,s_m) \from \mathbf{L}, q(t_1,\dotsc,t_n),\mathbf{N}\);
-        \item \(D_\prog\) has an edge \(p \edminus q\) iff \prog contains a clause \(p(s_1,\dotsc,s_m) \from \mathbf{L}, \neg q(t_1,\dotsc,t_n),\mathbf{N}\);
-    \end{itemize}
-\end{dfn}
-
-\begin{dfn}[Programs and graphs]
-    Let \prog be an extended program, \(D_\prog\) its dependency graph, \(p,q\) predicate symbols and \(Q\) an extended query.
-    \begin{itemize}
-        \item \(p\) \emph{depends evenly} (resp. \emph{oddly}) on \(q\) iff there is a path in \(D_\prog\) from \(p\) to \(q\) with an even (resp. odd) number of negative edges;
-        \item \prog is \emph{strict} wrt \(Q\) iff no predicate symbol occurring in \(Q\) depends both evenly and oddly on a predicate symbol in the head of a clause in \prog;
-        \item \prog is \emph{hierarchical}, iff \(D_\prog\) is acyclic;
-        \item \prog is \emph{stratified}, iff no cycle containing a negative edge appear in \(D_\prog\).
-    \end{itemize}
-\end{dfn}
-
-\begin{rem}
-    \(p\) depends evenly on \(p\) always, since a \(0\)-path has even length.
-\end{rem}
-
-\begin{dfn}[fairness]
-    An extended selection rule \rulesel is \emph{fair} if, for every \gls{sldnf}-tree \(F\) via \rulesel and for every brand \(\xi\) in \(F\), either \(\xi\) is failed or for every literal \(L\) occurring in a query of \(\xi\), some further instantiated version of \(L\) is selected within a finite number of derivation steps.
-\end{dfn}
-
-\begin{exa}
-    The selection rule ``select the leftmost literal'' is unfair.
-    On the other hand, ``select leftmost literal to the right of the literals introduced at the previous derivation step, if it exists, otherwise, select leftmost literal'' is a fair selection rule.
-\end{exa}
-
-\begin{dfn}
-    Let \prog be an extended program and \(I\) a Herbrand interpretation.
-    Then,
-    \begin{equation*}
-        T_\prog(I) := \lbrace H \mid H \from \mathbf{B} \in \grnd(\prog), I \models \mathbf{B} \rbrace.
-    \end{equation*}
-\end{dfn}
-
-\begin{rem}
-    If \prog is a definite program, the consequence operator has properties previously seen.
-    But now, all these nice properties are lost!
-\end{rem}
 
 \section{Theorems \& friends}
+
+\subsection{Soundness of \gls{sldnf}-resolution}
 
 \begin{thm}
     \label{dec-neg:thm-1}
     If there exists a successful \gls{sldnf}-derivation of \(\prog \cup \lbrace Q \rbrace\) with \gls{cas} \(\theta\), then \(\comp(\prog) \models Q\theta\).
 \end{thm}
 
-\begin{cor}[of Theorem~\ref{dec-neg:thm-1}]
+\begin{cor}[of~\cref{dec-neg:thm-1}]
     If there exists a successful \gls{sldnf}-derivation of \(\prog \cup \lbrace Q \rbrace\), then \(\comp(\prog) \models Q\theta\).
 \end{cor}
 
@@ -112,6 +127,8 @@
     In the general case, \gls{sldnf}-resolution is \emph{not complete}!
     Several examples on the slides are meant ot show that\ldots
 \end{rem}
+
+\subsection{``Completeness'' of \gls{sldnf}-resolution}
 
 \begin{thm}[Restricted completeness]
     \label{dec-neg:thm-2}
@@ -144,4 +161,31 @@
     Thus, we found that if \(H \in T_\prog(I)\), then \(H \in I\), hence \(T_\prog(I)\).
 
     Going backwards yields the other side of the proof.
+\end{proof}
+
+\begin{lem}
+    \label{lem:decl-neg-supp}
+    Let \prog be an extended program and \(I\) a Herbrand interpretation. Then, \(I_= \models \comp(\prog)\) if and only if \(T_\prog(I) = I\).
+\end{lem}
+\begin{proof}
+    First, notice that \(I_=\) is a model for the standard axioms of equality and inequality.
+
+    \(I_= \models \comp(\prog)\) is equivalent to
+    \begin{equation*}
+        I \models \left(H \leftrightarrow \bigvee_{(H \from \mathbf{B}) \in \grnd(\prog)} \mathbf{B}\right) \qquad \text{for each ground atom \(H\).}
+    \end{equation*}
+    This, in turn, is equivalent to say that, for each ground atom \(H\), \(H \in I\) if and only if \(I \models \mathbf{B}\) for some \(H \from \mathbf{B} \in \grnd(\prog)\).
+    This means, by definition of \(T_\prog\), that \(H \in I\) if and only if \(H \in T_\prog(I)\).
+    Therefore, we conclude that \(I_= = T_\prog(I)\).
+\end{proof}
+
+\begin{lem}
+    Let \prog be an extended program and \(I\) a Herbrand interpretation. Then, \(T_\prog(I) = I\) iff \(I \models \prog\) and \(I\) is supported.
+\end{lem}
+\begin{proof}
+    First, define \(\mathcal{B}(H) := \lbrace \mathbf{B} \mid H \from \mathbf{B} \in \grnd(P) \rbrace\).
+    Assume that \(I \models \prog\) and \(I\) is supported.
+    This is equivalent to say that, for every \(\mathbf{B} \in \mathcal{B}(H)\), \(I \models \mathbf{B}\) implies \(I \models H\) (since \(I \models \prog)\) and for every \(H \in I\), \(I \models \bigvee_{\mathbf{B} \in \mathcal{B}(H)} \mathbf{B}\), since \(I\) is supported.
+    This holds iff for every ground atom \(H\), \(I \models H \from \bigvee_{\mathbf{B} \in \mathcal{B}(H)} \mathbf{B}\) and \(I \models H \to \bigvee_{\mathbf{B} \in \mathcal{B}(H)} \mathbf{B}\), that is, \(I \models H \leftrightarrow \bigvee_{\mathbf{B} \in \mathcal{B}(H)} \mathbf{B}\).
+    Hence, \(I_=\) is a model of \(\comp(\prog)\), and by Lemma~\ref{lem:decl-neg-supp}, this is equivalent to \(T_\prog(I) = I\).
 \end{proof}
